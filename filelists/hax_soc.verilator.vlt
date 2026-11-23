@@ -1,0 +1,23 @@
+`verilator_config
+
+lint_off -rule UNUSEDSIGNAL
+lint_off -rule UNDRIVEN
+lint_off -rule VARHIDDEN
+lint_off -rule UNUSEDPARAM
+lint_off -rule WIDTHTRUNC
+lint_off -rule WIDTHEXPAND
+lint_off -rule IMPLICIT
+lint_off -rule GENUNNAMED
+
+lint_off -rule SYMRSVDWORD -file "*external/cv32e40x*"
+lint_off -rule COMBDLY     -file "*external/cv32e40x*"
+lint_off -rule UNOPTFLAT   -file "*external/cv32e40x*"
+
+lint_off -file "external/*/*"
+lint_off -rule UNSUPPORTED -file "src/rtl/*"
+lint_off -rule MULTIDRIVEN -file "src/rtl/*"
+lint_off -rule PINNOTFOUND -file "src/rtl/*"
+lint_off -rule PINMISSING -file "src/rtl/*"
+// lint_off -rule UNUSEDPARAM -file "tb/subsystem_tb/interfaces/*"
+// lint_off -rule SYNCASYNCNET -file "tb/subsystem_tb/interfaces/*"
+// lint_off -rule UNUSEDPARAM -file "rtl/blackbox/rom_bank.v"

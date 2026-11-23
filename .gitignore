@@ -1,0 +1,25 @@
+# Simulation & EDA tool outputs
+sim/work/
+sim/runs/
+*.log
+*.vcd
+*.fsdb
+*.wlf
+*.key
+cov_work/
+urgReport/
+*.simv*
+csrc/
+DVEfiles/
+
+# Software build outputs
+sw/**/*.elf
+sw/**/*.bin
+sw/**/*.hex
+sw/**/*.o
+sw/**/*.map
+
+# Verilator Ignores
+obj_dir
+output
+logs

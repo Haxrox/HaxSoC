@@ -1,0 +1,1 @@
++define+COREV_ASSERT_OFF
