@@ -1,0 +1,70 @@
+name: "Setup Verilator"
+
+on:
+  workflow_dispatch:
+    inputs:
+      verilator-version:
+        required: true
+        type: string
+  push:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      verilator-version:
+        required: true
+        type: string
+
+jobs:
+  build-verilator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Verilator
+        uses: actions/checkout@v4
+        with:
+          repository: verilator/verilator
+          ref: ${{ inputs.verilator-version }}
+          path: verilator
+
+      - name: Cache Verilator build
+        id: cache-verilator
+        uses: actions/cache@v5.0.3
+        with:
+          path: verilator
+          key: verilator-${{ runner.os }}-${{ inputs.verilator-version }}
+
+      - name: Update package lists
+        shell: bash
+        run: sudo apt-get update
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+
+      - name: Install Dependencies
+        shell: bash
+        run: sudo apt-get install -y git help2man perl python3 make autoconf g++ flex bison ccache libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g zlib1g-dev
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+
+      - name: Autoconf Verilator
+        shell: bash
+        working-directory: verilator
+        run: autoconf
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+
+      - name: Configure Verilator
+        shell: bash
+        working-directory: verilator
+        run: ./configure
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+
+      - name: Build Verilator
+        shell: bash
+        working-directory: verilator
+        run: make -j $(nproc)
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
+
+      - name: Set VERILATOR_ROOT
+        shell: bash
+        run: echo "VERILATOR_ROOT=verilator" >> $GITHUB_ENV
+
+      - name: Verify Verilator
+        shell: bash
+        run: ${VERILATOR_ROOT}/bin/verilator --version

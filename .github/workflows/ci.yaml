@@ -1,0 +1,145 @@
+name: CI
+
+env:
+  VERILATOR_ROOT: ${{ github.workspace }}/verilator
+  VERILATOR_VERSION: v5.044
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  setup-verilator:
+    uses: ./.github/workflows/setup-verilator.yml
+    with:
+      verilator-version: v5.044
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: [setup-verilator]
+    strategy:
+      matrix:
+        TOP_MODULE: ["hax_soc"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Verilator cache
+        uses: actions/cache@v5.0.3
+        with:
+          path: verilator
+          key: verilator-${{ runner.os }}-${{ env.VERILATOR_VERSION }}
+          fail-on-cache-miss: true
+
+      - name: Debug
+        if: ${{ env.ACTION_STEP_DEBUG || runner.debug == '1' }}
+        run: |
+          echo "List files:"
+          ls -la
+          echo "Verilator files:"
+          ls -la verilator
+          echo "VERILATOR_ROOT: $VERILATOR_ROOT"
+          echo "Verilator version:"
+          ${VERILATOR_ROOT}/bin/verilator --version
+
+      - name: Run lint
+        working-directory: .
+        run: make lint TOP_MODULE=${{ matrix.TOP_MODULE }}
+
+      - name: Save output
+        uses: actions/upload-artifact@v6.0.0
+        continue-on-error: true
+        with:
+          name: verilator-lint-output-${{ matrix.TOP_MODULE }}
+          path: .
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [setup-verilator, lint]
+    strategy:
+      matrix:
+        TOP_MODULE: ["hax_soc"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Verilator cache
+        uses: actions/cache@v5.0.3
+        with:
+          path: verilator
+          key: verilator-${{ runner.os }}-${{ env.VERILATOR_VERSION }}
+          fail-on-cache-miss: true
+
+      - name: Update package lists
+        run: sudo apt-get update
+
+      - name: Install Dependencies
+        run: sudo apt-get install -y make ccache
+
+      - name: Run build
+        working-directory: .
+        run: make build TOP_MODULE=${{ matrix.TOP_MODULE }}
+
+      - name: Save output
+        uses: actions/upload-artifact@v6.0.0
+        continue-on-error: true
+        with:
+          name: verilator-output-${{ matrix.TOP_MODULE }}
+          path: .
+
+  run:
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        TOP_MODULE: ["hax_soc"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v6.0.0
+        continue-on-error: true
+        with:
+          name: verilator-output-${{ matrix.TOP_MODULE }}
+          path: .
+
+      - name: Restore Verilator cache
+        uses: actions/cache@v5.0.3
+        with:
+          path: verilator
+          key: verilator-${{ runner.os }}-${{ env.VERILATOR_VERSION }}
+          fail-on-cache-miss: true
+
+      - name: Update package lists
+        run: sudo apt-get update
+
+      - name: Install Dependencies
+        run: sudo apt-get install -y make ccache
+
+      - name: Debug
+        if: ${{ env.ACTION_STEP_DEBUG || runner.debug == '1' }}
+        run: |
+          echo "List files:"
+          tree -a -L 3
+          echo "Output files:"
+          ls -la output/${{ matrix.TOP_MODULE }}
+
+      - name: Run test
+        run: make run TOP_MODULE=${{ matrix.TOP_MODULE }}
+
+      - name: Save output
+        uses: actions/upload-artifact@v6
+        continue-on-error: true
+        with:
+          name: verilator-run-output-${{ matrix.TOP_MODULE }}
+          path: .
