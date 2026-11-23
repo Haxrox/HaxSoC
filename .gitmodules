@@ -1,0 +1,6 @@
+[submodule "external/cv32e40x"]
+	path = external/cv32e40x
+	url = https://github.com/openhwfoundation/cv32e40x.git
+[submodule "external/core-v-verif"]
+	path = external/core-v-verif
+	url = https://github.com/openhwfoundation/core-v-verif.git
