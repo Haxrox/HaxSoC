@@ -156,3 +156,51 @@ jobs:
         with:
           name: verilator-run-output-${{ matrix.TOP_MODULE }}
           path: .
+
+  ci-gate:
+    name: CI Gate
+    if: ${{ always() && (github.event_name != 'push' || github.ref != 'refs/heads/main' || !startsWith(github.event.head_commit.message, 'Merge pull request')) }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs:
+      - setup-verilator
+      - lint
+      - build
+      - run
+    steps:
+      - name: Verify all CI jobs succeeded
+        run: |
+          SETUP_VERILATOR_RESULT="${{ needs.setup-verilator.result }}"
+          LINT_RESULT="${{ needs.lint.result }}"
+          BUILD_RESULT="${{ needs.build.result }}"
+          RUN_RESULT="${{ needs.run.result }}"
+          annotate_check() {
+            local check_name="$1"
+            local check_result="$2"
+            if [[ "${check_result}" == "success" ]]; then
+              echo "::notice title=CI Gate::✅ ${check_name}: ${check_result}"
+            else
+              echo "::error title=CI Gate::❌ ${check_name}: ${check_result}"
+            fi
+          }
+          annotate_check "Setup Verilator" "${SETUP_VERILATOR_RESULT}"
+          annotate_check "Lint" "${LINT_RESULT}"
+          annotate_check "Build" "${BUILD_RESULT}"
+          annotate_check "Run" "${RUN_RESULT}"
+          {
+            echo "## CI Gate Report"
+            echo ""
+            echo "| Check | Status |"
+            echo "|---|---|"
+            echo "| Setup Verilator | ${SETUP_VERILATOR_RESULT} |"
+            echo "| Lint | ${LINT_RESULT} |"
+            echo "| Build | ${BUILD_RESULT} |"
+            echo "| Run | ${RUN_RESULT} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          if [[ "${SETUP_VERILATOR_RESULT}" != "success" || \
+                "${LINT_RESULT}" != "success" || \
+                "${BUILD_RESULT}" != "success" || \
+                "${RUN_RESULT}" != "success" ]]; then
+            echo "CI Gate failed because one or more upstream jobs did not succeed."
+            exit 1
+          fi
