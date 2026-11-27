@@ -17,7 +17,8 @@ jobs:
     uses: ./.github/workflows/setup-verilator.yml
     strategy:
       matrix:
-        VERILATOR_VERSION: ["v5.054"]
+        VERILATOR_VERSION: &verilator_versions
+          - "v5.054"
     with:
       verilator-version: ${{ matrix.VERILATOR_VERSION }}
 
@@ -26,9 +27,12 @@ jobs:
     needs: [setup-verilator]
     strategy:
       matrix:
-        TOP_MODULE: ["hax_soc"]
-        TYPE: ["RTL", "UVM"]
-        VERILATOR_VERSION: ["v5.054"]
+        TOP_MODULE: &top_modules
+          - "hax_soc"
+        TYPE: &type_dv
+          - "RTL"
+          - "UVM"
+        VERILATOR_VERSION: *verilator_versions
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,9 +72,9 @@ jobs:
     needs: [setup-verilator, lint]
     strategy:
       matrix:
-        TOP_MODULE: ["hax_soc"]
-        TYPE: ["RTL", "UVM"]
-        VERILATOR_VERSION: ["v5.054"]
+        TOP_MODULE: *top_modules
+        TYPE: *type_dv
+        VERILATOR_VERSION: *verilator_versions
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,10 +110,10 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        TOP_MODULE: ["hax_soc"]
+        TOP_MODULE: *top_modules
         TYPE: ["UVM"]
         TEST: ["hax_soc_base_test"]
-        VERILATOR_VERSION: ["v5.054"]
+        VERILATOR_VERSION: *verilator_versions
     steps:
       - uses: actions/checkout@v4
         with:
