@@ -6,9 +6,6 @@ on:
       verilator-version:
         required: true
         type: string
-  push:
-    branches:
-      - main
   workflow_call:
     inputs:
       verilator-version:
@@ -35,31 +32,31 @@ jobs:
 
       - name: Update package lists
         shell: bash
-        run: sudo apt-get update
         if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: sudo apt-get update
 
       - name: Install Dependencies
         shell: bash
-        run: sudo apt-get install -y git help2man perl python3 make autoconf g++ flex bison ccache libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g zlib1g-dev
         if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: sudo apt-get install -y git help2man perl python3 make autoconf g++ flex bison ccache libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g zlib1g-dev
 
       - name: Autoconf Verilator
         shell: bash
         working-directory: verilator
-        run: autoconf
         if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: autoconf
 
       - name: Configure Verilator
         shell: bash
         working-directory: verilator
-        run: ./configure
         if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: ./configure
 
       - name: Build Verilator
         shell: bash
         working-directory: verilator
-        run: make -j $(nproc)
         if: steps.cache-verilator.outputs.cache-hit != 'true'
+        run: make -j $(nproc)
 
       - name: Set VERILATOR_ROOT
         shell: bash
