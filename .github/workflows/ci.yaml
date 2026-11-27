@@ -34,7 +34,7 @@ jobs:
           - "UVM"
         VERILATOR_VERSION: *verilator_versions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -76,7 +76,7 @@ jobs:
         TYPE: *type_dv
         VERILATOR_VERSION: *verilator_versions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -115,7 +115,7 @@ jobs:
         TEST: ["hax_soc_base_test"]
         VERILATOR_VERSION: *verilator_versions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
