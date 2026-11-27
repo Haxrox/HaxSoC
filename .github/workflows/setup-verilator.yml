@@ -12,6 +12,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   build-verilator:
     runs-on: ubuntu-latest
