@@ -6,8 +6,7 @@ module hax_soc #(
   parameter int unsigned X_RDATA_WIDTH = 32,
   parameter int unsigned X_RFREG_WIDTH = 32
 ) (
-  input logic clk,
-  input logic rst_n
+  `include "hax_soc_signals.svh"
 );
   cv32e40x_if_xif #(
     .X_NUM_RS      (X_NUM_RS),

@@ -2,7 +2,6 @@ name: CI
 
 env:
   VERILATOR_ROOT: ${{ github.workspace }}/verilator
-  VERILATOR_VERSION: v5.044
 
 on:
   pull_request:
@@ -16,8 +15,11 @@ on:
 jobs:
   setup-verilator:
     uses: ./.github/workflows/setup-verilator.yml
+    strategy:
+      matrix:
+        VERILATOR_VERSION: ["v5.044", "v5.054"]
     with:
-      verilator-version: v5.044
+      verilator-version: ${{ matrix.VERILATOR_VERSION }}
 
   lint:
     runs-on: ubuntu-latest
@@ -25,6 +27,8 @@ jobs:
     strategy:
       matrix:
         TOP_MODULE: ["hax_soc"]
+        TYPE: ["RTL", "UVM"]
+        VERILATOR_VERSION: ["v5.044", "v5.054"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +38,7 @@ jobs:
         uses: actions/cache@v5.0.3
         with:
           path: verilator
-          key: verilator-${{ runner.os }}-${{ env.VERILATOR_VERSION }}
+          key: verilator-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}
           fail-on-cache-miss: true
 
       - name: Debug
@@ -50,13 +54,13 @@ jobs:
 
       - name: Run lint
         working-directory: .
-        run: make lint TOP_MODULE=${{ matrix.TOP_MODULE }}
+        run: make lint TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }}
 
       - name: Save output
         uses: actions/upload-artifact@v6.0.0
         continue-on-error: true
         with:
-          name: verilator-lint-output-${{ matrix.TOP_MODULE }}
+          name: verilator-lint-output-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
           path: .
 
   build:
@@ -65,6 +69,8 @@ jobs:
     strategy:
       matrix:
         TOP_MODULE: ["hax_soc"]
+        TYPE: ["RTL", "UVM"]
+        VERILATOR_VERSION: ["v5.044", "v5.054"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -74,7 +80,7 @@ jobs:
         uses: actions/cache@v5.0.3
         with:
           path: verilator
-          key: verilator-${{ runner.os }}-${{ env.VERILATOR_VERSION }}
+          key: verilator-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}
           fail-on-cache-miss: true
 
       - name: Update package lists
@@ -85,13 +91,13 @@ jobs:
 
       - name: Run build
         working-directory: .
-        run: make build TOP_MODULE=${{ matrix.TOP_MODULE }}
+        run: make build TOP_MODULE=${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
 
       - name: Save output
         uses: actions/upload-artifact@v6.0.0
         continue-on-error: true
         with:
-          name: verilator-output-${{ matrix.TOP_MODULE }}
+          name: verilator-output-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
           path: .
 
   run:
@@ -101,6 +107,9 @@ jobs:
     strategy:
       matrix:
         TOP_MODULE: ["hax_soc"]
+        TYPE: ["UVM"]
+        TEST: ["hax_soc_base_test"]
+        VERILATOR_VERSION: ["v5.044", "v5.054"]
     steps:
       - uses: actions/checkout@v4
         with:
