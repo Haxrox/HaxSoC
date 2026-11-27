@@ -4,3 +4,6 @@
 [submodule "external/core-v-verif"]
 	path = external/core-v-verif
 	url = https://github.com/openhwfoundation/core-v-verif.git
+[submodule "external/uvm"]
+	path = external/uvm
+	url = https://github.com/chipsalliance/uvm-verilator.git
