@@ -61,7 +61,7 @@ jobs:
         run: make lint TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }}
 
       - name: Save output
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: verilator-lint-output-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
@@ -98,7 +98,7 @@ jobs:
         run: make build TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }}
 
       - name: Save output
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: verilator-build-output-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
@@ -151,7 +151,7 @@ jobs:
         run: make run TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }} TEST=${{ matrix.TEST }}
 
       - name: Save output
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: verilator-run-output-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}-${{ matrix.TEST }}
