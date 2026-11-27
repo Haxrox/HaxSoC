@@ -95,7 +95,7 @@ jobs:
 
       - name: Run build
         working-directory: .
-        run: make build TOP_MODULE=${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
+        run: make build TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }}
 
       - name: Save output
         uses: actions/upload-artifact@v6.0.0
