@@ -188,4 +188,4 @@ jobs:
     if: ${{ always() }}
     permissions: {}
     needs: [setup-verilator, lint, build, run]
-    uses: Haxrox/HaxGHA/.github/workflows/ci-gate.yml@v1
+    uses: Haxrox/HaxGHA/.github/workflows/reuse-ci-gate.yml@v1
