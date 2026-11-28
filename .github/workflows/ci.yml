@@ -185,7 +185,9 @@ jobs:
 
   ci-gate:
     name: CI Gate
+    needs: [setup-verilator, lint, build, run]
     if: ${{ always() }}
     permissions: {}
-    needs: [setup-verilator, lint, build, run]
     uses: Haxrox/HaxGHA/.github/workflows/reuse-ci-gate.yml@ci-gate-v1
+    with:
+      job-results: ${{ toJSON(needs) }}
