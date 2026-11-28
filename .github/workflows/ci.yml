@@ -2,6 +2,9 @@ name: CI
 
 env:
   VERILATOR_ROOT: ${{ github.workspace }}/verilator
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CXX: ccache g++
+  CC: ccache gcc
 
 on:
   pull_request:
@@ -46,7 +49,7 @@ jobs:
           submodules: recursive
 
       - name: Restore Verilator cache
-        uses: actions/cache@v6.1.0
+        uses: actions/cache/restore@v6.1.0
         with:
           path: verilator
           key: verilator-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}
@@ -88,7 +91,7 @@ jobs:
           submodules: recursive
 
       - name: Restore Verilator cache
-        uses: actions/cache@v6.1.0
+        uses: actions/cache/restore@v6.1.0
         with:
           path: verilator
           key: verilator-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}
@@ -103,6 +106,14 @@ jobs:
       - name: Run build
         working-directory: .
         run: make build TOP_MODULE=${{ matrix.TOP_MODULE }} TYPE=${{ matrix.TYPE }}
+
+      - name: Cache ccache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}-${{ hashFiles('**/*.sv', '**/*.v', '**/*.h', '**/*.cpp', '**/*.cc', 'Makefile', '**/filelists/**', '**/*.f') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
 
       - name: Save output
         uses: actions/upload-artifact@v7
@@ -134,11 +145,19 @@ jobs:
           path: .
 
       - name: Restore Verilator cache
-        uses: actions/cache@v6.1.0
+        uses: actions/cache/restore@v6.1.0
         with:
           path: verilator
           key: verilator-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}
           fail-on-cache-miss: true
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}-${{ hashFiles('**/*.sv', '**/*.v', '**/*.h', '**/*.cpp', '**/*.cc', 'Makefile', '**/filelists/**', '**/*.f') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.VERILATOR_VERSION }}-${{ matrix.TOP_MODULE }}-${{ matrix.TYPE }}
 
       - name: Update package lists
         run: sudo apt-get update
@@ -167,44 +186,6 @@ jobs:
   ci-gate:
     name: CI Gate
     if: ${{ always() }}
-    runs-on: ubuntu-latest
     permissions: {}
-    needs:
-      - setup-verilator
-      - lint
-      - build
-      - run
-    steps:
-      - name: Verify all CI jobs succeeded
-        env:
-          NEEDS_JSON: ${{ toJSON(needs) }}
-        run: |
-          set -euo pipefail
-
-          FAILED=0
-          SUMMARY="## CI Gate Report"$'\n\n'"| Check | Status |"$'\n'"|---|---|"
-
-          while IFS=$'\t' read -r job_key result; do
-            case "${result}" in
-              success)
-                echo "::notice title=CI Gate::✅ ${job_key}: ${result}"
-                SUMMARY="${SUMMARY}"$'\n'"| \`${job_key}\` | ✅ ${result} |"
-                ;;
-              skipped)
-                echo "::warning title=CI Gate::⏭️ ${job_key}: skipped"
-                SUMMARY="${SUMMARY}"$'\n'"| \`${job_key}\` | ⏭️ skipped |"
-                ;;
-              *)
-                echo "::error title=CI Gate::❌ ${job_key}: ${result}"
-                SUMMARY="${SUMMARY}"$'\n'"| \`${job_key}\` | ❌ ${result} |"
-                FAILED=1
-                ;;
-            esac
-          done < <(printf '%s\n' "${NEEDS_JSON}" | jq -r 'to_entries[] | [.key, (.value.result // "unknown")] | @tsv')
-
-          printf '%s\n' "${SUMMARY}" >> "${GITHUB_STEP_SUMMARY}"
-
-          if [[ "${FAILED}" -ne 0 ]]; then
-            echo "CI Gate failed because one or more upstream jobs did not succeed."
-            exit 1
-          fi
+    needs: [setup-verilator, lint, build, run]
+    uses: Haxrox/HaxGHA/.github/workflows/ci-gate.yml@v1
